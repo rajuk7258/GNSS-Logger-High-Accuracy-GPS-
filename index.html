@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GNSS Logger</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 1rem;
+      background: #f8f9fa;
+      color: #333;
+    }
+    h1 {
+      font-size: 1.5rem;
+    }
+    #log {
+      white-space: pre-wrap;
+      font-family: monospace;
+      background: #e9ecef;
+      padding: 1rem;
+      margin-top: 1rem;
+      border-radius: 5px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    button {
+      padding: 0.6rem 1.2rem;
+      font-size: 1rem;
+      margin-right: 10px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>GNSS Logger (High Accuracy GPS)</h1>
+  <button onclick="startLogging()">Start Logging</button>
+  <button onclick="stopLogging()">Stop Logging</button>
+  <div id="log">Waiting for input...</div>
+
+  <script>
+    let watchId = null;
+
+    function startLogging() {
+      if (!navigator.geolocation) {
+        alert("Geolocation is not supported by your browser.");
+        return;
+      }
+
+      document.getElementById("log").textContent = "Logging started...\n";
+
+      watchId = navigator.geolocation.watchPosition(success, error, {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      });
+    }
+
+    function stopLogging() {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+        document.getElementById("log").textContent += "\nLogging stopped.";
+      }
+    }
+
+    function success(position) {
+      const { latitude, longitude, accuracy, altitude, altitudeAccuracy } = position.coords;
+      const timestamp = new Date(position.timestamp).toLocaleTimeString();
+      const log = document.getElementById("log");
+
+      log.textContent +=
+        `\n[${timestamp}] Lat: ${latitude.toFixed(8)}, Lng: ${longitude.toFixed(8)} ` +
+        `| Acc: ${accuracy}m` +
+        (altitude !== null ? ` | Alt: ${altitude.toFixed(2)}m` : "") +
+        (altitudeAccuracy !== null ? ` | AltAcc: ${altitudeAccuracy.toFixed(2)}m` : "");
+
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function error(err) {
+      const log = document.getElementById("log");
+      log.textContent += `\nError: ${err.message}`;
+    }
+  </script>
+</body>
+</html>
